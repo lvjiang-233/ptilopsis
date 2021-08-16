@@ -51,19 +51,22 @@ async def download(message: types.Message):
                 # gain origin file from list
                 if is_instance_or_subclass(content, List):
                     content = sorted(content, key=lambda file: file.file_size)[-1]
-
+                # download suitable content
                 if is_instance_or_subclass(content, Downloadable):
-                    file_path = getattr(content, 'file_name', None)
-                    if file_path is not None:
-                        if not os.path.exists(f'{message.from_user.id}'):
-                            os.mkdir(f'{message.from_user.id}')
-                        file_path=f'{message.from_user.id}/{file_path}'
-                    # when the destination is None the file will be stored in `{content_type}/file_{id}.{ext}`
-                    # `{id}` accords with the number of this type of files this bot has ever received
-                    # and this file isn't in the folder named by user_id
+                    if hasattr(content, 'file_name'):
+                        file_name = getattr(content, 'file_name')
+                    else:
+                        # Get file name through the File object generate by `get_file`
+                        file = await bot.get_file(content.file_id)
+                        file_name = file.file_path.split('/')[-1]
+                    file_path=f'data/{message.from_user.id}/{file_name}'
+                        
+                    if not os.path.exists(f'data/{message.from_user.id}'):
+                        os.makedirs(f'data/{message.from_user.id}')
+
                     try:
                         des = await content.download(destination=file_path)
-                        logging.info(f'File download success, stored in {des.name}')
+                        logging.info(f'File download success, stored in {file_path}')
 
                         await manager.upload(des.name)
                         logging.info('File upload success')

@@ -12,3 +12,6 @@ __pycache__/
 
 # configuration
 .env
+
+# Bot runtime file
+data/
